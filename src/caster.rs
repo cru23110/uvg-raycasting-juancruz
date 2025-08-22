@@ -34,40 +34,37 @@ pub fn cast_ray(maze: &Maze, origin: Vector2, angle: f32) -> Hit {
     let delta_dist_y = if dy.abs() < 1e-6 { 1e30 } else { (1.0 / dy).abs() };
 
     let (step_x, mut side_dist_x) = if dx < 0.0 {
-        let sd = (origin.x - map_x as f32) * delta_dist_x;
-        (-1, sd)
+        (-1, (origin.x - map_x as f32) * delta_dist_x)
     } else {
-        let sd = ((map_x + 1) as f32 - origin.x) * delta_dist_x;
-        (1, sd)
+        ( 1, ((map_x + 1) as f32 - origin.x) * delta_dist_x)
     };
     let (step_y, mut side_dist_y) = if dy < 0.0 {
-        let sd = (origin.y - map_y as f32) * delta_dist_y;
-        (-1, sd)
+        (-1, (origin.y - map_y as f32) * delta_dist_y)
     } else {
-        let sd = ((map_y + 1) as f32 - origin.y) * delta_dist_y;
-        (1, sd)
+        ( 1, ((map_y + 1) as f32 - origin.y) * delta_dist_y)
     };
 
-    let mut hit_side = 0u8;
-    let mut hit_cell = '#';
+    let (hit_side, hit_cell);
 
     loop {
-        if side_dist_x < side_dist_y {
-            side_dist_x += delta_dist_x;
-            map_x += step_x;
-            hit_side = 0;
-        } else {
-            side_dist_y += delta_dist_y;
-            map_y += step_y;
-            hit_side = 1;
-        }
+        let stepped_side =
+            if side_dist_x < side_dist_y {
+                side_dist_x += delta_dist_x;
+                map_x += step_x;
+                0u8
+            } else {
+                side_dist_y += delta_dist_y;
+                map_y += step_y;
+                1u8
+            };
 
         if map_x < 0 || map_y < 0 || map_x >= mw as i32 || map_y >= mh as i32 {
-            return Hit { dist: 1.0e6, cell: '#', side: hit_side };
+            return Hit { dist: 1.0e6, cell: '#', side: stepped_side };
         }
 
         let c = maze[map_y as usize][map_x as usize];
         if is_wall(c) {
+            hit_side = stepped_side;
             hit_cell = c;
             break;
         }
@@ -110,7 +107,7 @@ pub fn render_3d(fb: &mut Framebuffer, maze: &Maze, player_pos: Vector2, player_
         let draw_end   =  line_h/2 + h/2;
 
         let mut col = wall_color(hit.cell);
-        if hit.side == 1 { col = Color::new(col.r / 2, col.g / 2, col.b / 2, 255); }
+        if hit.side == 1 {col = Color::new(col.r / 2, col.g / 2, col.b / 2, 255);}
 
         fb.set_current_color(col);
         vline(fb, x, draw_start, draw_end);
